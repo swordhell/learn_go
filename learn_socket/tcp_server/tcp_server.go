@@ -8,17 +8,72 @@ import (
 	"os"
 	"os/signal"
 	"sync"
+	"time"
 )
 
-type server struct {
-	sync.Mutex
-	ln       net.Listener
-	SigClose chan bool
+type session struct {
+	conn      net.Conn
+	writeChan chan []byte
 }
 
-type session struct {
-	conn     net.Conn
-	SigClose chan bool
+type SessionSet map[*session]struct{}
+
+type server struct {
+	tempDelay time.Duration
+	sync.Mutex
+	ln         net.Listener
+	wgLn       sync.WaitGroup
+	wgSession  sync.WaitGroup
+	sessionSet SessionSet
+}
+
+func (this *server) Close() {
+	this.ln.Close()
+	this.wgLn.Wait()
+}
+
+func (this *server) ProcTempErr() {
+	tempDelay := this.tempDelay
+	if tempDelay == 0 {
+		tempDelay = 5 * time.Millisecond
+	} else {
+		tempDelay *= 2
+	}
+	if max := 1 * time.Second; tempDelay > max {
+		tempDelay = max
+	}
+	fmt.Printf("accept retrying in %v", tempDelay)
+	time.Sleep(tempDelay)
+	this.tempDelay = tempDelay
+}
+
+func (this *server) onNewSession(conn net.Conn) {
+
+	c := &session{conn: conn}
+	this.Lock()
+	this.sessionSet[c] = struct{}{}
+	this.Unlock()
+
+	this.wgSession.Add(1)
+	go c.recvData(this.wgSession)
+
+}
+
+func (this *server) run() {
+	this.wgLn.Add(1)
+	defer this.wgLn.Done()
+	for {
+		conn, err := this.ln.Accept()
+		if err != nil {
+			if ne, ok := err.(net.Error); ok && !ne.Temporary() {
+				fmt.Errorf("Accept err: %v\n")
+				return
+			}
+			this.ProcTempErr()
+			continue
+		}
+		this.onNewSession(conn)
+	}
 }
 
 func (this *server) Listen() {
@@ -28,43 +83,12 @@ func (this *server) Listen() {
 		return
 	}
 	this.ln = ln
-	go func(l_this *server) {
-		for {
-			conn, cn_err := l_this.ln.Accept()
-			if cn_err != nil {
-				fmt.Println("accept fail", cn_err)
-			}
-			c := &session{conn: conn, SigClose: l_this.SigClose}
-			c.StartSession()
-		}
-	}(this)
+	this.sessionSet = make(SessionSet)
+	go this.run()
 }
 
-func (this *server) Close() {
-	this.ln.Close()
-}
-
-func main() {
-	sigClose := make(chan bool)
-	svr := &server{SigClose: sigClose}
-	svr.Listen()
-
-	// close
-	c := make(chan os.Signal, 1)
-	signal.Notify(c, os.Interrupt, os.Kill)
-	<-c
-
-	sigClose <- true
-	svr.Close()
-}
-
-func (this *session) StartSession() {
-	go func(l_this *session) {
-		l_this.recvData()
-	}(this)
-}
-
-func (this *session) recvData() {
+func (this *session) recvData(wg sync.WaitGroup) {
+	defer wg.Done()
 	conn := this.conn
 	for {
 		data, err := procData(conn)
@@ -102,5 +126,21 @@ func sendData(con net.Conn) {
 }
 
 func handleData(conn net.Conn, data []byte) {
+
+}
+
+func main() {
+	svr := &server{}
+	svr.Listen()
+
+	// close
+	c := make(chan os.Signal, 1)
+	signal.Notify(c, os.Interrupt, os.Kill)
+	<-c
+
+	svr.Close()
+}
+
+func (this *session) StartSession() {
 
 }
