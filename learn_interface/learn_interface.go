@@ -4,7 +4,7 @@ import "fmt"
 
 type (
 	InterfaceA interface {
-		FunA()
+		FunA(param interface{})
 		FunB()
 	}
 	classA struct {
@@ -16,8 +16,10 @@ type (
 	}
 )
 
-func (a *classA) FunA() {
+func (a *classA) FunA(param interface{}) {
 	fmt.Println("classA.FunA() Age ", a.Age)
+	i := param.(InterfaceA)
+	i.FunB()
 	a.FunB()
 }
 
@@ -32,16 +34,16 @@ func (b *classB) FunB() {
 func testConvert() {
 	var b *classA
 	if i := InterfaceA(b); i != nil {
-		i.FunA()
+		i.FunA(i)
 	}
 }
 
 func testinherit() {
 	var i InterfaceA
 	i = &classB{}
-	i.FunA()
+	i.FunA(i)
 }
 
 func main() {
-	testConvert()
+	testinherit()
 }
