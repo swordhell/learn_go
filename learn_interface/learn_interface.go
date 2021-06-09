@@ -20,7 +20,7 @@ func (a *classA) FunA(param interface{}) {
 	fmt.Println("classA.FunA() Age ", a.Age)
 	i := param.(InterfaceA)
 	i.FunB()
-	a.FunB()
+	a.InterfaceA.FunB()
 }
 
 func (a *classA) FunB() {
