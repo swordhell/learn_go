@@ -32,6 +32,52 @@ func test1() {
 	time.Sleep(8 * time.Second)
 }
 
+func testMutilUse() {
+	var c chan string
+	c = make(chan string, 3)
+	c <- "hello"
+
+	go func() {
+		for {
+			select {
+			case a, ok := <-c:
+				{
+					if !ok {
+						fmt.Println("is close")
+						break
+					}
+					fmt.Println(a)
+				}
+			default:
+			}
+			time.Sleep(1 * time.Second)
+		}
+	}()
+
+	go func() {
+		for {
+			select {
+			case a, ok := <-c:
+				{
+					if !ok {
+						break
+					}
+					fmt.Println(a)
+				}
+			default:
+			}
+			time.Sleep(1 * time.Second)
+		}
+	}()
+
+	for i := 0; i < 10; i++ {
+		c <- fmt.Sprintf("%d", i)
+	}
+	close(c)
+
+	time.Sleep(8 * time.Second)
+}
+
 func testclose() {
 	var c chan string
 	c = make(chan string, 3)
@@ -63,5 +109,6 @@ func testclose() {
 }
 
 func main() {
-	testclose()
+	// testclose()
+	testMutilUse()
 }

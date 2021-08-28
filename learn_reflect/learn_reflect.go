@@ -45,8 +45,36 @@ func tGetStructTag() {
 	}
 }
 
+type TestStruct struct {
+	TInt32  int32
+	TString string
+}
+
+// 测试循环全部的元素
+func tForeachElementCheckType() {
+	s := &TestStruct{
+		TInt32:  88,
+		TString: "helloAbel",
+	}
+
+	refv := reflect.ValueOf(s).Elem()
+	reft := refv.Type()
+	for i := 0; i < refv.NumField(); i++ {
+		fv := refv.Field(i)
+		switch fv.Kind() {
+		case reflect.Int32:
+			ft := reft.Field(i)
+			fmt.Println("数字类型 name: ", ft.Name, " value: ", fv.Interface())
+		case reflect.String:
+			ft := reft.Field(i)
+			fmt.Println("字符串 name: ", ft.Name, " value: ", fv.Interface())
+		}
+	}
+}
+
 func main() {
 	// tStruct()
 	// tCreateBaseData()
-	tGetStructTag()
+	// tGetStructTag()
+	tForeachElementCheckType()
 }
