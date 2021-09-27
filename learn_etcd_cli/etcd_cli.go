@@ -17,8 +17,12 @@ func main() {
 	c := make(chan os.Signal, 1)
 	if util, err := etcdutil.NewETCDUtil(cfg, 5, nil); err == nil {
 
-		if err := util.PutWithLease("serverlist/", "{state:0}"); err != nil {
-			fmt.Println(err.Error())
+		if handle, err := util.WatchKey("serverlist", true, func(eventType etcdutil.EventType, key string, value string) {
+			fmt.Println("eventType ", eventType, " key ", key, " value ", value)
+		}); err == nil {
+			fmt.Println("WatchKey handle ", handle)
+		} else {
+			fmt.Println("WatchKey fail ", err.Error())
 		}
 		<-c
 	} else {
