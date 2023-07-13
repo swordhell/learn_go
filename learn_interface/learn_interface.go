@@ -16,6 +16,26 @@ type (
 	}
 )
 
+type MyInterface interface {
+	MyMethod()
+}
+
+type MyStruct1 struct {
+	// 结构体字段
+}
+
+func (s *MyStruct1) MyMethod() {
+	// 实现 MyInterface 中的方法
+}
+
+type MyStruct2 struct {
+	// 结构体字段
+}
+
+func (s MyStruct2) MyMethod() {
+	// 实现 MyInterface 中的方法
+}
+
 func (a *classA) FunA(param interface{}) {
 	fmt.Println("classA.FunA() Age ", a.Age)
 	i := param.(InterfaceA)
@@ -46,4 +66,10 @@ func testinherit() {
 
 func main() {
 	testinherit()
+
+	// 使用 MyInterface 类型来接收不同的结构体对象
+	var obj1 MyInterface = &MyStruct1{}
+	var obj2 MyInterface = MyStruct2{}
+	obj1.MyMethod()
+	obj2.MyMethod()
 }

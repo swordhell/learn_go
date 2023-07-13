@@ -3,6 +3,7 @@ package main
 import (
 	"bytes"
 	"encoding/json"
+	"fmt"
 	"io/ioutil"
 	"net/http"
 	"strconv"
@@ -41,9 +42,11 @@ func main() {
 		return
 	}
 
+	nonce := fmt.Sprintf("%d", (time.Now().UnixNano() /1000))
 	// 设置请求头
 	request.Header.Add("Content-Type", "application/json")
 	request.Header.Add("Accept", "application/json")
+	request.Header.Add("Biz-Api-Nonce", nonce)
 
 	// 发送请求并获取响应
 	response, err := client.Do(request)
