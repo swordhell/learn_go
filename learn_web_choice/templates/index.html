@@ -1,0 +1,31 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>吃饭的店铺随机转盘</title>
+    <link rel="stylesheet" type="text/css" href="/static/style.css">
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <script>
+        // JavaScript 代码用于旋转转盘
+        function spinWheel() {
+            var wheel = $('#wheel');
+            // 随机旋转角度
+            var rotation = Math.floor(Math.random() * 360) + 3600;
+            // 应用旋转
+            wheel.css('transform', 'rotate(' + rotation + 'deg)');
+            // 等待旋转完成
+            setTimeout(() => {
+                // 显示随机选择的餐厅
+                var selectedRestaurant = $("#restaurant-name").text();
+                alert("今天吃: " + selectedRestaurant);
+            }, 3000);
+        }
+    </script>
+</head>
+<body>
+    <h1>吃饭的店铺随机转盘</h1>
+    <div id="wheel">
+        <div id="restaurant-name">{{ selected_restaurant }}</div>
+    </div>
+    <button onclick="spinWheel()">开始旋转</button>
+</body>
+</html>
